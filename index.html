@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Typing Speed Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 30px 15px; display: flex; justify-content: center; }
+    .box { background: #1e293b; width: 100%; max-width: 640px; padding: 24px; border-radius: 12px; }
+    h1 { text-align: center; margin-top: 0; }
+    .stats { display: flex; justify-content: space-around; background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; }
+    #sample { font-size: 1.25rem; line-height: 1.8; background: #0f172a; padding: 16px; border-radius: 8px; color: #64748b; font-family: monospace; }
+    #sample .ok { color: #4ade80; }
+    #sample .bad { color: #fff; background: #dc2626; }
+    textarea { width: 100%; height: 90px; margin-top: 14px; padding: 12px; font-size: 1.05rem; border-radius: 8px; border: 2px solid #334155; background: #0f172a; color: #fff; box-sizing: border-box; resize: none; }
+    button { margin-top: 12px; width: 100%; padding: 12px; border: none; border-radius: 8px; background: #38bdf8; color: #0f172a; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    #result { margin-top: 16px; text-align: center; font-size: 1.3rem; font-weight: bold; color: #4ade80; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Typing Speed Test</h1>
+    <div class="stats">
+      <span>Time: <span id="time">30</span>s</span>
+      <span>WPM: <span id="wpm">0</span></span>
+      <span>Accuracy: <span id="acc">100</span>%</span>
+    </div>
+    <div id="sample"></div>
+    <textarea id="input" placeholder="Start typing here. The timer begins with your first key."></textarea>
+    <button onclick="reset()">Restart</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const passages = [
+      "Practice makes progress. Every small project you build teaches you something new about how software works.",
+      "A good programmer writes code that humans can read. Clear names and simple logic make bugs easier to find.",
+      "Consistency beats intensity. Writing a little code every day will take you further than coding all night once."
+    ];
+    const LIMIT = 30;
+    let timeLeft, timer, started, text;
+
+    const sampleEl = document.getElementById("sample");
+    const inputEl = document.getElementById("input");
+
+    function reset() {
+      clearInterval(timer);
+      started = false;
+      timeLeft = LIMIT;
+      text = passages[Math.floor(Math.random() * passages.length)];
+      inputEl.value = "";
+      inputEl.disabled = false;
+      inputEl.focus();
+      document.getElementById("result").textContent = "";
+      updateStats(0, 100);
+      renderSample("");
+    }
+
+    function renderSample(typed) {
+      sampleEl.innerHTML = "";
+      for (let i = 0; i < text.length; i++) {
+        const span = document.createElement("span");
+        span.textContent = text[i];
+        if (i < typed.length) span.className = typed[i] === text[i] ? "ok" : "bad";
+        sampleEl.appendChild(span);
+      }
+    }
+
+    function updateStats(wpm, acc) {
+      document.getElementById("time").textContent = timeLeft;
+      document.getElementById("wpm").textContent = wpm;
+      document.getElementById("acc").textContent = acc;
+    }
+
+    function calc() {
+      const typed = inputEl.value;
+      let correct = 0;
+      for (let i = 0; i < typed.length; i++) {
+        if (typed[i] === text[i]) correct++;
+      }
+      const elapsed = Math.max(LIMIT - timeLeft, 1);
+      const wpm = Math.round((correct / 5) / (elapsed / 60));
+      const acc = typed.length ? Math.round((correct / typed.length) * 100) : 100;
+      return { wpm, acc };
+    }
+
+    inputEl.addEventListener("input", () => {
+      if (!started) {
+        started = true;
+        timer = setInterval(() => {
+          timeLeft--;
+          const s = calc();
+          updateStats(s.wpm, s.acc);
+          if (timeLeft <= 0) finish();
+        }, 1000);
+      }
+      renderSample(inputEl.value);
+      const s = calc();
+      updateStats(s.wpm, s.acc);
+      if (inputEl.value.length >= text.length) finish();
+    });
+
+    function finish() {
+      clearInterval(timer);
+      inputEl.disabled = true;
+      const s = calc();
+      updateStats(s.wpm, s.acc);
+      document.getElementById("result").textContent = "Done! Speed: " + s.wpm + " WPM | Accuracy: " + s.acc + "%";
+    }
+
+    reset();
+  </script>
+</body>
+</html>
